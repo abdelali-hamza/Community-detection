@@ -8,7 +8,7 @@ from collections import defaultdict
 import time
 
 
-def draw_communities(G, community_map, node_size=None, alpha=1, k=None, randomized=False, plot_weights=True, verbose=False):
+def draw_communities(G, community_map, node_size=5, alpha=1, k=None, randomized=False, plot_weights=True, verbose=False):
     if verbose:
         print("Drawing Communities...")
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -28,7 +28,7 @@ def draw_communities(G, community_map, node_size=None, alpha=1, k=None, randomiz
         elif node_count < 500:
             node_size = 100
         elif node_count < 1000:
-            node_size = 50
+            node_size = 20
 
     cmap = plt.get_cmap("jet")
     pos = nx.spring_layout(G, k=k)
@@ -95,7 +95,11 @@ class Louvain(object):
         node2com = self._runFirstPhase(node2com, edge_weights, param, verbose=verbose)
         end = time.time()
         partition = node2com.copy()
-        best_modularity = self.computeModularity(node2com, edge_weights, param)
+        com2node = defaultdict(list)
+        for node, com_id in node2com.items():
+            com2node[com_id].append(node)
+        # best_modularity = self.computeModularity(node2com, edge_weights, param)
+        best_modularity = nx.community.modularity(graph, com2node.values())
         if plot:
             draw_communities(graph, node2com, node_size=size, plot_weights=False, verbose=verbose)
         new_node2com, new_edge_weights = self._runSecondPhase(node2com, edge_weights)
@@ -103,7 +107,7 @@ class Louvain(object):
         new_graph.add_weighted_edges_from(
             [(i, j, new_edge_weights[i][j]) for i in new_edge_weights.keys() for j in new_edge_weights[i].keys()])
         pass_num = 2
-        history = [(end-start, best_modularity, new_node2com, new_edge_weights, new_graph, partition, pass_num)]
+        history = [(end-start, best_modularity, node2com, edge_weights, graph, partition, pass_num)]
         while True:
             if plot:
                 draw_communities(new_graph, new_node2com, node_size=size, verbose=verbose)
@@ -112,15 +116,24 @@ class Louvain(object):
             start = time.time()
             new_node2com = self._runFirstPhase(new_node2com, new_edge_weights, param, verbose=verbose)
             end = time.time()
-            modularity = self.computeModularity(new_node2com, new_edge_weights, param)
+
+            com2node = defaultdict(list)
+            for node, com_id in new_node2com.items():
+                com2node[com_id].append(node)
+            
+            modularity = nx.community.modularity(new_graph, com2node.values())
+            past_partition = partition
+            # modularity = self.computeModularity(new_node2com, new_edge_weights, param)
             if verbose:
-                print(f'{modularity}   totototototo    {best_modularity}')
-            if abs(best_modularity - modularity) < self.MIN_VALUE:
-                break
-            best_modularity = modularity
+                print(f'{best_modularity}   to new modularity with value of    {modularity}')
             partition = self._updatePartition(new_node2com, partition)
+            history.append((end-start, modularity, new_node2com, new_edge_weights, new_graph, partition, pass_num))
             if plot:
                 draw_communities(new_graph, new_node2com, node_size=size, verbose=verbose)
+            if abs(best_modularity - modularity) < self.MIN_VALUE:
+                partition = past_partition
+                break
+            best_modularity = modularity
             _new_node2com, _new_edge_weights = self._runSecondPhase(new_node2com, new_edge_weights)
             new_graph = nx.Graph()
             new_graph.add_weighted_edges_from(
@@ -129,7 +142,6 @@ class Louvain(object):
             new_node2com = _new_node2com
             new_edge_weights = _new_edge_weights
             pass_num += 1
-            history.append((end-start, best_modularity, new_node2com, new_edge_weights, new_graph, partition, pass_num))
         return partition, history
 
     def computeModularity(self, node2com, edge_weights, param):
