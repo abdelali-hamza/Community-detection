@@ -1,8 +1,11 @@
 # Community-detection
 
-# Variable Neighborhood Decomposition Search (VNDS)
+1. **VNDS**: Variable Neighborhood Decomposition Search (VNDS)
 
 VNDS is a metaheuristic optimization algorithm for combinatorial optimization problems. It is particularly effective for solving community detection problems by iteratively exploring the search space through local search and diversification strategies.
+
+2. **LOUVAIN**: Louvain algorithm
+The Louvain algorithm is a powerful community detection algorithm widely used in network analysis. It efficiently identifies communities in large networks based on modularity optimization. This repository contains an implementation of the Louvain algorithm along with usage instructions, examples, and relevant documentation.
 
 # Contributing
 
