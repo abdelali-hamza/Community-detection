@@ -1,1 +1,1 @@
-from louvain.louvain import Louvain
+from louvain.louvain import Louvain, draw_communities

@@ -8,7 +8,7 @@ from collections import defaultdict
 import time
 
 
-def draw_communities(G, community_map, node_size=5, alpha=1, k=None, randomized=False, plot_weights=True, verbose=False):
+def draw_communities(G, community_map, node_size=None, alpha=1, k=None, randomized=False, plot_weights=True, verbose=False):
     if verbose:
         print("Drawing Communities...")
     fig, ax = plt.subplots(figsize=(10, 10))
